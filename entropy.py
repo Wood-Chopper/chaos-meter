@@ -1,79 +1,72 @@
 import networkx as nx
 import sys
 import pprint
-import itertools
+import madge_parser
+import jdeps_parser
 
-EDGE_SEPARATOR = "<-[#595959,plain]-"
+EDGE_SEPARATOR = " -> "
 
 nodeNames = {}
 G = nx.DiGraph()
 def main():
     args = sys.argv[1:]
-    file = open(args[0], "r")
-    entries = file.readlines()
-    read_puml(entries)
+    filename = args[0]
 
+    links = parse(filename)
+    ingest(links)
+
+    print('--------------------------')
     cycle_detector()
-    #highlight_strongly_connected()
+    print('--------------------------')
     highlight_larger_in_degree()
-    highlight_page_rank()
+    print('--------------------------')
     density()
+    print('--------------------------')
 
 
-def read_puml(entries):
+def parse(filename):
+    file = open(filename, "r")
+    lines = file.readlines()
+    extension = filename.split('.')[-1]
+    parsed_lines = {
+        'madge': lambda v: madge_parser.parse(v),
+        'jdeps': lambda v: jdeps_parser.parse(v)
+    }[extension](lines)
+    return parsed_lines
+
+
+def ingest(entries):
     for entry in entries:
-        if entry.__contains__("class") & entry.__contains__(" as ") & (not entry.__contains__(".spec.")):
-            nodeId = entry.split(" ")[1].strip()
-            nodeName = entry.split(" ")[3].strip().replace('\"', '')
-            G.add_node(nodeId)
-            nodeNames[nodeId] = nodeName
-    for entry in entries:
-        if entry.__contains__(EDGE_SEPARATOR):
-            source = entry.split(EDGE_SEPARATOR)[0].strip()
-            target = entry.split(EDGE_SEPARATOR)[1].strip()
-            if (G.has_node(source) & G.has_node(target)):
-                if (not G.has_edge(source, target)):  # simple edge, no weight
-                    G.add_edge(source, target)
+        [source, target] = entry.split(EDGE_SEPARATOR)
+        if (not G.has_node(source)):
+            G.add_node(source)
+        if (not G.has_node(target)):
+            G.add_node(target)
+        if (G.has_node(source) & G.has_node(target)):
+            G.add_edge(source, target)
 
 
 # Detects cycles in the dependencies
 def cycle_detector():
     result = sorted(nx.simple_cycles(G))
-    friendlyfied = list(map(friendly_names, result))
-    if friendlyfied != []:
-        print("Cycles detected")
-        pprint.pprint(friendlyfied)
-
-# Highlight the strongly connected components (first 30)
-def highlight_strongly_connected():
-    print("Strongly connected components")
-    result = itertools.islice(nx.strongly_connected_components(G), 100)
-    friendlyfied = list(map(friendly_names, result))
-    pprint.pprint(friendlyfied)
-
+    nbre = len(result)
+    if (nbre > 0):
+        print(str(nbre) + " cycles detected")
+        pprint.pprint(result)
+    else:
+        print("No cycle detected")
 
 # Highlight the components with the bigger in-degree (first 30)
 def highlight_larger_in_degree():
-    print("In-degree")
+    print("In-degree > 3")
     degree = list(G.in_degree())
     degree.sort(key=lambda x: x[1], reverse=True)
-    friendlyfied = list(map(friendly_name_with_weight, degree[:30]))
-    pprint.pprint(friendlyfied)
-
-
-# Highlight the components with the bigger page raking (first 30)
-def highlight_page_rank():
-    print("Page rank")
-    result = nx.pagerank(G).items()
-    result = sorted(result, key=lambda x: x[1], reverse=True)
-    friendlyfied = list(map(friendly_name_with_weight, result[:30]))
-    pprint.pprint(friendlyfied)
-
+    degree = [s for s in degree if s[1] > 3]
+    pprint.pprint(degree)
 
 # Print the density of the graph. The lower, the better
 def density():
-    print("Density")
-    print(nx.density(G))
+    print("Density", nx.density(G))
 
 
 def friendly_name_with_weight(node):
