@@ -30,7 +30,8 @@ def parse(filename):
     extension = filename.split('.')[-1]
     parsed_lines = {
         'madge': lambda v: madge_parser.parse(v),
-        'jdeps': lambda v: jdeps_parser.parse(v)
+        'jdeps': lambda v: jdeps_parser.parse(v),
+        'graph': lambda v: [s.strip() for s in v]
     }[extension](lines)
     return parsed_lines
 
