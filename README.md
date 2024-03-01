@@ -11,7 +11,7 @@ Currently, the tool supports building the graph of javascript, typescript and ja
 
 ### Typescript graph
 
-To build the graph of a frontend project, you need to install Madge. Madge is a tool that generates a graph of your file dependencies. It works with both CommonJS and ES6 module syntax, and it works with both JavaScript and TypeScript.
+To build the graph of a frontend project, you need to install Madge. [Madge](https://www.npmjs.com/package/madge) is a tool that generates a graph of your file dependencies. It works with both CommonJS and ES6 module syntax, and it works with both JavaScript and TypeScript.
 
 Install Madge globally:
 ```shell
@@ -25,7 +25,7 @@ madge --extensions ts --exclude '.*.spec.ts' ./src > project-name.madge
 
 ### Java graph
 
-To build the graph of a backend project, we use jdeps. jdeps is a tool that generates a graph of your file dependencies. jdeps is able to analyse a jar but is not able to recursively analyse a fat jar.
+To build the graph of a backend project, we use jdeps. [jdeps](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jdeps.html) is a tool that generates a graph of your file dependencies. jdeps is able to analyse a jar but is not able to recursively analyse a fat jar.
 
 For applications that are not modularized, you can use the following command to generate the graph:
 
