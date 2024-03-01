@@ -38,11 +38,11 @@ def parse(filename):
 def ingest(entries):
     for entry in entries:
         [source, target] = entry.split(EDGE_SEPARATOR)
-        if (not G.has_node(source)):
+        if not G.has_node(source):
             G.add_node(source)
-        if (not G.has_node(target)):
+        if not G.has_node(target):
             G.add_node(target)
-        if (G.has_node(source) & G.has_node(target)):
+        if G.has_node(source) & G.has_node(target):
             G.add_edge(source, target)
 
 
