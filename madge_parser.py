@@ -1,10 +1,12 @@
 import sys
 
+
 def main():
     args = sys.argv[1:]
     file = open(args[0], "r")
     entries = file.readlines()
     print(parse(entries))
+
 
 def parse(lines):
     parent = None  # Variable to keep track of the current parent node
@@ -20,6 +22,7 @@ def parse(lines):
             parent = stripped_line
 
     return relationships
+
 
 if __name__ == "__main__":
     main()
