@@ -4,12 +4,13 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pylint = "*"
+pylint = "3.0.3"
 
 [packages]
-networkx = "*"
-numpy = "*"
-scipy = "*"
+argparse = "3.12.2"
+networkx = "3.2.1"
+numpy = "1.26.4"
+scipy = "1.12.0"
 
 [requires]
 python_version = "3"

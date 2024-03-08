@@ -10,15 +10,18 @@ def main():
     print(parse(entries))
 
 
-def parse(lines):
+def parse(lines, model_regex=None):
     transformed_lines = []  # List to store the transformed lines
 
     for line in lines:
         # Check if the line is indented, indicating a mapping we're interested in
         if line.startswith("   "):
             splitted = line.split(EDGE_SEPARATOR)
-            clean_line = splitted[0] + EDGE_SEPARATOR + splitted[1].split(' ')[0]
-            transformed_lines.append(clean_line)
+            from_ = splitted[0].strip()
+            to_ = splitted[1].split(' ')[0]
+            if not model_regex or (not model_regex.match(to_) and not model_regex.match(from_)):
+                clean_line = from_ + EDGE_SEPARATOR + to_
+                transformed_lines.append(clean_line)
 
     return transformed_lines
 

@@ -3,6 +3,8 @@ import sys
 import pprint
 import madge_parser
 import jdeps_parser
+import argparse
+import re
 
 EDGE_SEPARATOR = " -> "
 
@@ -11,10 +13,22 @@ G = nx.DiGraph()
 
 
 def main():
-    args = sys.argv[1:]
-    filename = args[0]
 
-    links = parse(filename)
+    parser = argparse.ArgumentParser(
+        prog='Software Entropy calculator',
+        description='Tool used to measure various metrics of a software dependency graph.')
+
+    parser.add_argument('-g', '--graph', help='The file containing the dependency graph. Example: "path/to/graph.<jdeps|madge|graph>"', required=True)
+    parser.add_argument('-m', '--model',
+                        help='Regex to identify the model components. This allows to differentiate models from logical components and have more relevant results. Example: ".*\\.model\\..*|.*\\.entity\\..*|.*\\.dto\\..*"',
+                        required=False)
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stdout)
+        sys.exit(1)
+    args = parser.parse_args()
+
+    links = parse(args.graph, args.model)
     ingest(links)
 
     print('--------------------------')
@@ -36,18 +50,21 @@ def main():
     print('--------------------------')
     density()
     print('--------------------------')
+    topological_sort()
+    print('--------------------------')
 
 
-def parse(filename):
-    file = open(filename, "r")
-    lines = file.readlines()
-    extension = filename.split('.')[-1]
-    parsed_lines = {
-        'madge': lambda v: madge_parser.parse(v),
-        'jdeps': lambda v: jdeps_parser.parse(v),
-        'graph': lambda v: [s.strip() for s in v]
-    }[extension](lines)
-    return parsed_lines
+def parse(filename, model):
+    with open(filename, "r") as file:
+        lines = file.readlines()
+        extension = filename.split('.')[-1]
+        model_regex = re.compile(model) if model else None
+        parsed_lines = {
+            'madge': lambda v: madge_parser.parse(v, model_regex),
+            'jdeps': lambda v: jdeps_parser.parse(v, model_regex),
+            'graph': lambda v: [s.strip() for s in v]
+        }[extension](lines)
+        return parsed_lines
 
 
 def ingest(entries):
@@ -136,6 +153,47 @@ def flow_hierarchy():
 def density():
     """Density of the graph. The lower, the better"""
     print("Density", nx.density(G))
+
+
+def topological_sort():
+    """Topological sorting for Directed Acyclic Graph (DAG) is a linear ordering of vertices such that for every directed edge uv, vertex u comes before v in the ordering."""
+
+    if len(list(nx.simple_cycles(G))) > 0:
+        print("The graph contains cycles and cannot be topologically sorted")
+        return
+
+    # Perform a topological sort to determine a possible order for processing
+    topo_sorted_nodes = list(nx.topological_sort(G))
+
+    # Initialize layer assignment
+    layers = {}
+    current_layer = 0
+
+    # Assign layers based on dependencies
+    for node in reversed(topo_sorted_nodes):  # Start from the most dependent node
+        if G.out_degree(node) == 0:  # If the node has no dependencies, assign it the current layer
+            layers[node] = current_layer
+        else:
+            # Find the highest layer among the dependencies
+            dep_layers = [layers[dep] for dep in G.successors(node)]
+            layers[node] = max(dep_layers) + 1  # Place the node above its highest dependency
+
+    # Since the process can assign higher numbers to "higher" layers (contrary to intuitive understanding),
+    # we may invert the layers to make the "highest" layer have the smallest number
+    max_layer = max(layers.values())
+    node_layers = {node: max_layer - layer for node, layer in layers.items()}
+
+    # Invert the mapping to have layer IDs as keys and component names as values
+    layers = {}
+    for node, layer in node_layers.items():
+        if layer not in layers:
+            layers[layer] = [node]
+        else:
+            layers[layer].append(node)
+
+    print("Layers (layer ID: [component names]):")
+    for layer in sorted(layers):
+        pprint.pprint(f"{layer}: {layers[layer]}")
 
 
 if __name__ == "__main__":

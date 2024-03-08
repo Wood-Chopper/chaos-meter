@@ -30,13 +30,13 @@ To build the graph of a backend project, we use jdeps. [jdeps](https://docs.orac
 For applications that are not modularized, you can use the following command to generate the graph:
 
 ```shell
-jdeps -verbose:class -e se.hms.* application-jar.jar > project-name.jdeps
+jdeps -verbose:class -e com.example.* application-jar.jar > project-name.jdeps
 ```
 
 For applications that are modularized (i.e hexagonal applications), you can use a similar command to generate the graph:
 
 ```shell
-jdeps -verbose:class -e se.hms.*  **/target/**SNAPSHOT.jar > project-name.jdeps
+jdeps -verbose:class -e com.example.*  **/target/**SNAPSHOT.jar > project-name.jdeps
 ```
 
 Note that the -e flag is used to only include the se.hms package in the graph.
@@ -48,4 +48,6 @@ Another way could be to unpack the fat jar and target the relevant jars in a sin
 **Simply run:**
 ```shell
 python3 entropy.py <project-name>.<extention>
+
+python entropy.py -g path/to/graph -m ".*\.model\..*|.*\.entity\..*|.*\.dto\..*"
 ```
