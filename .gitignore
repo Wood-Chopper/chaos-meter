@@ -3,4 +3,4 @@ Pipfile.lock
 graphs/private
 dist
 build
-entropy.spec
+chaosmeter.spec
