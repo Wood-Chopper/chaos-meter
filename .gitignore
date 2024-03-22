@@ -1,3 +1,6 @@
 Pipfile.lock
 .idea
 graphs/private
+dist
+build
+entropy.spec

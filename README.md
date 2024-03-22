@@ -1,5 +1,5 @@
-# software-entropy
-Tool used to measure various parameters of a dependency graph. Those parameters represent the software entropy.
+# Chaos Meter
+Chaos meter measure various metrics of a dependency graph. Those metrics represent the software entropy. Unlike the classic code analyser tools, Chaos Meter focuses on the dependencies between the components of a software project. The goal is to provide a better understanding of an existing software architecture and to identify potential issues.
 
 **Steps:**
 * Build the project graph
