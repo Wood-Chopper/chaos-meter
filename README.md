@@ -43,11 +43,31 @@ Note that the -e flag is used to only include the se.hms package in the graph.
 
 Another way could be to unpack the fat jar and target the relevant jars in a single call to jdeps like in the previous example.
 
-## Analyse the graph
-
-**Simply run:**
+## Usage
 ```shell
-python3 entropy.py <project-name>.<extention>
+usage: Software Entropy calculator [-h] -g GRAPH -m {cycle,in-degree,out-degree,centrality-degree,flow-hierarchy,density,topology} [-e EXCLUDE]
 
-python entropy.py -g path/to/graph -m ".*\.model\..*|.*\.entity\..*|.*\.dto\..*"
+Tool used to measure various metrics of a software dependency graph.
+
+options:
+  -h, --help            show this help message and exit
+  -g GRAPH, --graph GRAPH
+                        The file containing the dependency graph. Example: "path/to/graph.<jdeps|madge|graph>"
+  -m {cycle,in-degree,out-degree,centrality-degree,flow-hierarchy,density,topology}, --metric {cycle,in-degree,out-degree,centrality-degree,flow-hierarchy,density,topology}
+                        The metric to output
+  -e EXCLUDE, --exclude EXCLUDE
+                        Regex to identify the components to be excluded from the analysis. This allows to differentiate models from logical components and have more relevant results. Example: ".*\.model\..*|.*\.entity\..*|.*\.dto\..*"
+
+```
+
+
+## Examples
+
+**Compute the density of a graph**
+```shell
+python3 entropy.py -g path/to/graph -m density
+```
+**Compute the topology of a graph by excluding models from the analysis**
+```shell
+python entropy.py -g path/to/graph -e ".*\.model\..*|.*\.entity\..*|.*\.dto\..*" -m topology
 ```

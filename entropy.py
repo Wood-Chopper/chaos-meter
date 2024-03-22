@@ -5,6 +5,7 @@ import madge_parser
 import jdeps_parser
 import argparse
 import re
+import json
 
 EDGE_SEPARATOR = " -> "
 
@@ -19,8 +20,9 @@ def main():
         description='Tool used to measure various metrics of a software dependency graph.')
 
     parser.add_argument('-g', '--graph', help='The file containing the dependency graph. Example: "path/to/graph.<jdeps|madge|graph>"', required=True)
-    parser.add_argument('-m', '--model',
-                        help='Regex to identify the model components. This allows to differentiate models from logical components and have more relevant results. Example: ".*\\.model\\..*|.*\\.entity\\..*|.*\\.dto\\..*"',
+    parser.add_argument('-m', '--metric', help='The metric to output', required=True, choices=['cycle', 'in-degree', 'out-degree', 'centrality-degree', 'flow-hierarchy', 'density', 'topology'])
+    parser.add_argument('-e', '--exclude',
+                        help='Regex to identify the components to be excluded from the analysis. This allows to differentiate models from logical components and have more relevant results. Example: ".*\\.model\\..*|.*\\.entity\\..*|.*\\.dto\\..*"',
                         required=False)
 
     if len(sys.argv) == 1:
@@ -28,40 +30,34 @@ def main():
         sys.exit(1)
     args = parser.parse_args()
 
-    links = parse(args.graph, args.model)
+    links = parse(args.graph, args.exclude)
     ingest(links)
+    metric = args.metric
 
-    print('--------------------------')
-    cycle_detector()
-    print('--------------------------')
-    highlight_larger_in_degree()
-    print('--------------------------')
-    highlight_larger_out_degree()
-    print('--------------------------')
-    highlight_larger_centrality_degree()
-    print('--------------------------')
-    connected_components()
-    print('--------------------------')
-    betweenness_centrality()
-    print('--------------------------')
-    closeness_centrality()
-    print('--------------------------')
-    flow_hierarchy()
-    print('--------------------------')
-    density()
-    print('--------------------------')
-    topological_sort()
-    print('--------------------------')
+    if metric is None or metric == 'cycle':
+        cycle_detector()
+    if metric is None or metric == 'in-degree':
+        highlight_larger_in_degree()
+    if metric is None or metric == 'out-degree':
+        highlight_larger_out_degree()
+    if metric is None or metric == 'centrality-degree':
+        highlight_larger_centrality_degree()
+    if metric is None or metric == 'flow-hierarchy':
+        flow_hierarchy()
+    if metric is None or metric == 'density':
+        density()
+    if metric is None or metric == 'topology':
+        topological_sort()
 
 
-def parse(filename, model):
+def parse(filename, exclude):
     with open(filename, "r") as file:
         lines = file.readlines()
         extension = filename.split('.')[-1]
-        model_regex = re.compile(model) if model else None
+        exclude_regex = re.compile(exclude) if exclude else None
         parsed_lines = {
-            'madge': lambda v: madge_parser.parse(v, model_regex),
-            'jdeps': lambda v: jdeps_parser.parse(v, model_regex),
+            'madge': lambda v: madge_parser.parse(v, exclude_regex),
+            'jdeps': lambda v: jdeps_parser.parse(v, exclude_regex),
             'graph': lambda v: [s.strip() for s in v]
         }[extension](lines)
         return parsed_lines
@@ -82,11 +78,11 @@ def cycle_detector():
     """Detects cycles in the dependencies"""
     result = sorted(nx.simple_cycles(G))
     nbre = len(result)
-    if (nbre > 0):
-        print(str(nbre) + " cycles detected")
-        pprint.pprint(result)
-    else:
-        print("No cycle detected")
+    report = {
+        "total": nbre,
+        "cycles": result
+    }
+    print(json.dumps(report, indent=4))
 
 
 def highlight_larger_in_degree():
@@ -95,7 +91,7 @@ def highlight_larger_in_degree():
     degree = list(G.in_degree())
     degree.sort(key=lambda x: x[1], reverse=True)
     degree = [s for s in degree if s[1] > 3]
-    pprint.pprint(degree)
+    print(json.dumps(degree, indent=4))
 
 
 def highlight_larger_out_degree():
@@ -104,7 +100,7 @@ def highlight_larger_out_degree():
     degree = list(G.out_degree())
     degree.sort(key=lambda x: x[1], reverse=True)
     degree = [s for s in degree if s[1] > 3]
-    pprint.pprint(degree)
+    print(json.dumps(degree, indent=4))
 
 
 def highlight_larger_centrality_degree():
@@ -116,43 +112,17 @@ def highlight_larger_centrality_degree():
     c_list = list(centrality_degree.items())
     c_list.sort(key=lambda x: x[1], reverse=True)
     degree = [s for s in c_list if s[1] > 5]
-    pprint.pprint(degree)
-
-
-def connected_components():
-    """Highlight the strongly connected components"""
-    print("Strongly connected components")
-    l = list(nx.strongly_connected_components(G))
-    l.sort(key=len, reverse=True)
-    pprint.pprint([v for v in l if len(v) > 1])
-
-
-def betweenness_centrality():
-    """Classes that frequently appear on shortest paths between other classes might play a crucial role in the communication or data flow within the application.
-    These classes are potential candidates for optimization or refactoring to reduce tight coupling."""
-    print("Betweenness centrality")
-    l = list(nx.betweenness_centrality(G).items())
-    l.sort(key=lambda x: x[1], reverse=True)
-    pprint.pprint(l[:5])
-
-
-def closeness_centrality():
-    """Identifies classes that can quickly interact with other classes in the system, potentially highlighting good candidates for central services or utilities."""
-    print("Closeness centrality")
-    l = list(nx.closeness_centrality(G).items())
-    l.sort(key=lambda x: x[1], reverse=True)
-    pprint.pprint(l[:5])
+    print(json.dumps(degree, indent=4))
 
 
 def flow_hierarchy():
     """Flow hierarchy is defined as the fraction of edges not participating in cycles in a directed graph. The higher, the better"""
-    print("Flow hierarchy")
-    pprint.pprint(nx.flow_hierarchy(G))
+    print(nx.flow_hierarchy(G))
 
 
 def density():
     """Density of the graph. The lower, the better"""
-    print("Density", nx.density(G))
+    print(nx.density(G))
 
 
 def topological_sort():
@@ -191,9 +161,7 @@ def topological_sort():
         else:
             layers[layer].append(node)
 
-    print("Layers (layer ID: [component names]):")
-    for layer in sorted(layers):
-        pprint.pprint(f"{layer}: {layers[layer]}")
+    print(json.dumps(layers, indent=4))
 
 
 if __name__ == "__main__":
