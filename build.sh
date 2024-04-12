@@ -1,1 +1,1 @@
-pyinstaller --onefile entropy.py --icon=logo.ico --name=chaosmeter
+pyinstaller --onefile chaosmeter.py --icon=logo.ico --name=chaosmeter

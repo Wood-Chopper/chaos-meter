@@ -65,9 +65,9 @@ options:
 
 **Compute the density of a graph**
 ```shell
-python3 entropy.py -g path/to/graph -m density
+python3 chaosmeter.py -g path/to/graph -m density
 ```
 **Compute the topology of a graph by excluding models from the analysis**
 ```shell
-python entropy.py -g path/to/graph -e ".*\.model\..*|.*\.entity\..*|.*\.dto\..*" -m topology
+python chaosmeter.py -g path/to/graph -e ".*\.model\..*|.*\.entity\..*|.*\.dto\..*" -m topology
 ```
