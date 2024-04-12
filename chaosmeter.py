@@ -30,9 +30,15 @@ def main():
         sys.exit(1)
     args = parser.parse_args()
 
-    links = parse(args.graph, args.exclude)
-    ingest(links)
+    graph = args.graph
     metric = args.metric
+    exclude = args.exclude
+    compute_metric(graph, metric, exclude)
+
+
+def compute_metric(graph, metric, exclude):
+    links = parse(graph, exclude)
+    ingest(links)
 
     if metric is None or metric == 'cycle':
         cycle_detector()
