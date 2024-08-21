@@ -39,7 +39,7 @@ For applications that are modularized (i.e hexagonal applications), you can use 
 jdeps -verbose:class -e com.example.*  **/target/**SNAPSHOT.jar > project-name.jdeps
 ```
 
-Note that the -e flag is used to only include the se.hms package in the graph.
+Note that the -e flag is used to only include the `com.example` package in the graph.
 
 Another way could be to unpack the fat jar and target the relevant jars in a single call to jdeps like in the previous example.
 

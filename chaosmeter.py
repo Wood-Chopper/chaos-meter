@@ -34,9 +34,10 @@ def main():
 	metric_value = chaos_meter.compute_metric(metric)
 	print(json.dumps(metric_value, indent=4))
 
+
 class ChaosMeter:
 
-	def __init__(self, graph, exclude):
+	def __init__(self, graph, exclude=None):
 		self.G = nx.DiGraph()
 		self.graph = graph
 		self.exclude = exclude
